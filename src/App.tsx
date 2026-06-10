@@ -178,6 +178,7 @@ function App() {
               <div>
                 <span className="snapshot-label">Primary contact</span>
                 <strong>{selectedPatient.primaryContact}</strong>
+                <span>{selectedPatient.primaryContactEmail}</span>
               </div>
             </div>
 

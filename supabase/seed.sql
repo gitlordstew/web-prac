@@ -1,9 +1,19 @@
+create table if not exists primary_contacts (
+  id text primary key,
+  full_name text not null,
+  email text not null,
+  phone text,
+  relationship text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists patients (
   id text primary key,
   name text not null,
   age integer not null,
   room text not null,
-  primary_contact text not null,
+  primary_contact_id text references primary_contacts(id),
   status text not null check (status in ('Stable', 'Improving', 'Watch', 'Critical')),
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -18,17 +28,44 @@ create table if not exists patient_notes (
   created_at timestamptz not null default now()
 );
 
-insert into patients (id, name, age, room, primary_contact, status) values
-  ('PAT-1001', 'Elena Reyes', 78, 'A-104', 'Marco Reyes', 'Stable'),
-  ('PAT-1002', 'Benjamin Hart', 84, 'B-212', 'Lena Hart', 'Improving'),
-  ('PAT-1003', 'Grace Nakamura', 81, 'C-018', 'Yuki Nakamura', 'Watch'),
-  ('PAT-1004', 'Samir Patel', 88, 'A-019', 'Nisha Patel', 'Critical'),
-  ('PAT-1005', 'Rosa Mitchell', 76, 'D-305', 'Tara Mitchell', 'Stable')
+alter table patients add column if not exists primary_contact_id text references primary_contacts(id);
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_name = 'patients'
+      and column_name = 'primary_contact'
+  ) then
+    alter table patients alter column primary_contact drop not null;
+  end if;
+end $$;
+
+insert into primary_contacts (id, full_name, email, phone, relationship) values
+  ('CON-1001', 'Marco Reyes', 'transaction.mclovin@gmail.com', '+1 555 0101', 'Son'),
+  ('CON-1002', 'Lena Hart', 'transaction.mclovin@gmail.com', '+1 555 0102', 'Daughter'),
+  ('CON-1003', 'Yuki Nakamura', 'transaction.mclovin@gmail.com', '+1 555 0103', 'Grandchild'),
+  ('CON-1004', 'Nisha Patel', 'transaction.mclovin@gmail.com', '+1 555 0104', 'Daughter'),
+  ('CON-1005', 'Tara Mitchell', 'transaction.mclovin@gmail.com', '+1 555 0105', 'Sister')
+on conflict (id) do update set
+  full_name = excluded.full_name,
+  email = excluded.email,
+  phone = excluded.phone,
+  relationship = excluded.relationship,
+  updated_at = now();
+
+insert into patients (id, name, age, room, primary_contact_id, status) values
+  ('PAT-1001', 'Elena Reyes', 78, 'A-104', 'CON-1001', 'Stable'),
+  ('PAT-1002', 'Benjamin Hart', 84, 'B-212', 'CON-1002', 'Improving'),
+  ('PAT-1003', 'Grace Nakamura', 81, 'C-018', 'CON-1003', 'Watch'),
+  ('PAT-1004', 'Samir Patel', 88, 'A-019', 'CON-1004', 'Critical'),
+  ('PAT-1005', 'Rosa Mitchell', 76, 'D-305', 'CON-1005', 'Stable')
 on conflict (id) do update set
   name = excluded.name,
   age = excluded.age,
   room = excluded.room,
-  primary_contact = excluded.primary_contact,
+  primary_contact_id = excluded.primary_contact_id,
   status = excluded.status,
   updated_at = now();
 

@@ -14,7 +14,9 @@ export type Patient = {
   name: string;
   age: number;
   room: string;
+  primaryContactId: string;
   primaryContact: string;
+  primaryContactEmail: string;
   status: PatientStatus;
   notes: PatientNote[];
 };
@@ -37,7 +39,9 @@ export const seedPatients: Patient[] = [
     name: "Elena Reyes",
     age: 78,
     room: "A-104",
+    primaryContactId: "CON-1001",
     primaryContact: "Marco Reyes",
+    primaryContactEmail: "transaction.mclovin@gmail.com",
     status: "Stable",
     notes: [
       {
@@ -71,7 +75,9 @@ export const seedPatients: Patient[] = [
     name: "Benjamin Hart",
     age: 84,
     room: "B-212",
+    primaryContactId: "CON-1002",
     primaryContact: "Lena Hart",
+    primaryContactEmail: "transaction.mclovin@gmail.com",
     status: "Improving",
     notes: [
       {
@@ -105,7 +111,9 @@ export const seedPatients: Patient[] = [
     name: "Grace Nakamura",
     age: 81,
     room: "C-018",
+    primaryContactId: "CON-1003",
     primaryContact: "Yuki Nakamura",
+    primaryContactEmail: "transaction.mclovin@gmail.com",
     status: "Watch",
     notes: [
       {
@@ -139,7 +147,9 @@ export const seedPatients: Patient[] = [
     name: "Samir Patel",
     age: 88,
     room: "A-019",
+    primaryContactId: "CON-1004",
     primaryContact: "Nisha Patel",
+    primaryContactEmail: "transaction.mclovin@gmail.com",
     status: "Critical",
     notes: [
       {
@@ -173,7 +183,9 @@ export const seedPatients: Patient[] = [
     name: "Rosa Mitchell",
     age: 76,
     room: "D-305",
+    primaryContactId: "CON-1005",
     primaryContact: "Tara Mitchell",
+    primaryContactEmail: "transaction.mclovin@gmail.com",
     status: "Stable",
     notes: [
       {
@@ -252,6 +264,11 @@ export async function submitPatientNote(
         age: patient.age,
         room: patient.room,
         currentStatus: patient.status,
+        primaryContact: {
+          id: patient.primaryContactId,
+          name: patient.primaryContact,
+          email: patient.primaryContactEmail,
+        },
         latestNotes: patient.notes.slice(0, 3),
       },
       note: {
