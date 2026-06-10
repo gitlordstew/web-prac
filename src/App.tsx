@@ -1,68 +1,83 @@
 import { FormEvent, useMemo, useState } from "react";
 import {
+  Activity,
+  AlertTriangle,
   ArrowUpRight,
-  CheckCircle2,
-  CircleHelp,
-  Clock3,
-  Inbox,
+  ClipboardList,
+  HeartPulse,
   Loader2,
   Send,
   ShieldCheck,
-  Sparkles,
+  TrendingUp,
+  UserRound,
 } from "lucide-react";
-import { createTicket, Ticket, TicketFormData, TicketPriority } from "./lib/tickets";
+import {
+  Patient,
+  PatientNoteFormData,
+  PatientStatus,
+  seedPatients,
+  submitPatientNote,
+} from "./lib/patients";
 
-const categories = ["Technical Support", "Billing", "Account Access", "Feature Request"];
-const priorities: TicketPriority[] = ["Low", "Medium", "High", "Urgent"];
-
-const initialForm: TicketFormData = {
-  requesterName: "",
-  email: "",
-  category: categories[0],
-  priority: "Medium",
-  subject: "",
-  description: "",
+const initialForm: PatientNoteFormData = {
+  patientId: seedPatients[0].id,
+  author: "",
+  note: "",
 };
 
-const seedTickets: Ticket[] = [
-  {
-    id: "TKT-104921",
-    requesterName: "Mina Tan",
-    email: "mina@example.com",
-    category: "Account Access",
-    priority: "High",
-    subject: "Unable to access dashboard",
-    description: "Login succeeds but the workspace dashboard stays blank.",
-    status: "Triaging",
-    createdAt: new Date(Date.now() - 1000 * 60 * 46).toISOString(),
-  },
-  {
-    id: "TKT-104881",
-    requesterName: "Rafael Lim",
-    email: "rafael@example.com",
-    category: "Billing",
-    priority: "Medium",
-    subject: "Receipt needed for last invoice",
-    description: "Please send a tax receipt for the most recent invoice.",
-    status: "Open",
-    createdAt: new Date(Date.now() - 1000 * 60 * 130).toISOString(),
-  },
-];
+const statusIcon = {
+  Stable: ShieldCheck,
+  Improving: TrendingUp,
+  Watch: Activity,
+  Critical: AlertTriangle,
+};
+
+const formatTime = (value: string) =>
+  new Intl.DateTimeFormat("en", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(new Date(value));
 
 function App() {
-  const [form, setForm] = useState<TicketFormData>(initialForm);
-  const [tickets, setTickets] = useState<Ticket[]>(seedTickets);
+  const [form, setForm] = useState<PatientNoteFormData>(initialForm);
+  const [patients, setPatients] = useState<Patient[]>(seedPatients);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const openCount = useMemo(
-    () => tickets.filter((ticket) => ticket.status !== "Resolved").length,
-    [tickets],
+  const selectedPatient = patients.find((patient) => patient.id === form.patientId) ?? patients[0];
+
+  const statusCounts = useMemo(
+    () =>
+      patients.reduce(
+        (totals, patient) => ({
+          ...totals,
+          [patient.status]: totals[patient.status] + 1,
+        }),
+        { Stable: 0, Improving: 0, Watch: 0, Critical: 0 } as Record<PatientStatus, number>,
+      ),
+    [patients],
+  );
+
+  const latestNotes = useMemo(
+    () =>
+      patients
+        .flatMap((patient) =>
+          patient.notes.map((note) => ({
+            ...note,
+            patientName: patient.name,
+            room: patient.room,
+          })),
+        )
+        .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))
+        .slice(0, 5),
+    [patients],
   );
 
   const handleChange = (
-    field: keyof TicketFormData,
-    value: TicketFormData[keyof TicketFormData],
+    field: keyof PatientNoteFormData,
+    value: PatientNoteFormData[keyof PatientNoteFormData],
   ) => {
     setForm((current) => ({ ...current, [field]: value }));
   };
@@ -73,12 +88,25 @@ function App() {
     setNotice(null);
 
     try {
-      const ticket = await createTicket(form);
-      setTickets((current) => [ticket, ...current]);
-      setForm(initialForm);
-      setNotice(`Ticket ${ticket.id} was created.`);
+      const note = await submitPatientNote(form, selectedPatient);
+
+      setPatients((current) =>
+        current.map((patient) =>
+          patient.id === selectedPatient.id
+            ? {
+                ...patient,
+                status: note.status,
+                notes: [note, ...patient.notes].slice(0, 6),
+              }
+            : patient,
+        ),
+      );
+      setForm((current) => ({ ...current, author: "", note: "" }));
+      setNotice(
+        `${selectedPatient.name}'s note was sent to n8n. Demo status is ${note.status}; Supabase should use the AI result from your workflow.`,
+      );
     } catch (error) {
-      setNotice(error instanceof Error ? error.message : "Unable to create ticket.");
+      setNotice(error instanceof Error ? error.message : "Unable to submit patient note.");
     } finally {
       setIsSubmitting(false);
     }
@@ -89,110 +117,88 @@ function App() {
       <section className="workspace">
         <header className="topbar">
           <div>
-            <p className="eyebrow">Support desk</p>
-            <h1>Ticket Desk</h1>
+            <p className="eyebrow">Elderly monitoring</p>
+            <h1>Care Status Desk</h1>
           </div>
           <div className="status-pill">
-            <ShieldCheck size={18} aria-hidden="true" />
-            Frontend ready
+            <HeartPulse size={18} aria-hidden="true" />
+            n8n AI intake
           </div>
         </header>
 
-        <section className="summary-grid" aria-label="Ticket summary">
+        <section className="summary-grid" aria-label="Patient summary">
           <article>
-            <Inbox size={20} aria-hidden="true" />
-            <span>{tickets.length}</span>
-            <p>Total tickets</p>
+            <UserRound size={20} aria-hidden="true" />
+            <span>{patients.length}</span>
+            <p>Active patients</p>
           </article>
           <article>
-            <Clock3 size={20} aria-hidden="true" />
-            <span>{openCount}</span>
-            <p>Needs attention</p>
+            <Activity size={20} aria-hidden="true" />
+            <span>{statusCounts.Watch + statusCounts.Critical}</span>
+            <p>Needs review</p>
           </article>
           <article>
-            <Sparkles size={20} aria-hidden="true" />
-            <span>n8n</span>
-            <p>Automation ready</p>
+            <ShieldCheck size={20} aria-hidden="true" />
+            <span>{statusCounts.Stable + statusCounts.Improving}</span>
+            <p>Stable or improving</p>
           </article>
         </section>
 
         <section className="content-grid">
-          <form className="ticket-form" onSubmit={handleSubmit}>
+          <form className="monitor-form" onSubmit={handleSubmit}>
             <div className="section-heading">
               <div>
-                <p className="eyebrow">New request</p>
-                <h2>Create a ticket</h2>
+                <p className="eyebrow">Daily note</p>
+                <h2>Submit patient update</h2>
               </div>
-              <CircleHelp size={20} aria-label="Ticket form" />
+              <ClipboardList size={20} aria-label="Patient note form" />
             </div>
 
             <label>
-              Name
-              <input
-                required
-                value={form.requesterName}
-                onChange={(event) => handleChange("requesterName", event.target.value)}
-                placeholder="Your name"
-              />
+              Patient
+              <select
+                value={form.patientId}
+                onChange={(event) => handleChange("patientId", event.target.value)}
+              >
+                {patients.map((patient) => (
+                  <option key={patient.id} value={patient.id}>
+                    {patient.name} - Room {patient.room}
+                  </option>
+                ))}
+              </select>
             </label>
 
-            <label>
-              Email
-              <input
-                required
-                type="email"
-                value={form.email}
-                onChange={(event) => handleChange("email", event.target.value)}
-                placeholder="you@example.com"
-              />
-            </label>
-
-            <div className="field-row">
-              <label>
-                Category
-                <select
-                  value={form.category}
-                  onChange={(event) => handleChange("category", event.target.value)}
-                >
-                  {categories.map((category) => (
-                    <option key={category}>{category}</option>
-                  ))}
-                </select>
-              </label>
-
-              <label>
-                Priority
-                <select
-                  value={form.priority}
-                  onChange={(event) =>
-                    handleChange("priority", event.target.value as TicketPriority)
-                  }
-                >
-                  {priorities.map((priority) => (
-                    <option key={priority}>{priority}</option>
-                  ))}
-                </select>
-              </label>
+            <div className="patient-snapshot">
+              <div>
+                <span className="snapshot-label">Current status</span>
+                <strong className={`status-badge status-${selectedPatient.status.toLowerCase()}`}>
+                  {selectedPatient.status}
+                </strong>
+              </div>
+              <div>
+                <span className="snapshot-label">Primary contact</span>
+                <strong>{selectedPatient.primaryContact}</strong>
+              </div>
             </div>
 
             <label>
-              Subject
+              Caregiver
               <input
                 required
-                value={form.subject}
-                onChange={(event) => handleChange("subject", event.target.value)}
-                placeholder="What should we help with?"
+                value={form.author}
+                onChange={(event) => handleChange("author", event.target.value)}
+                placeholder="Nurse or caregiver name"
               />
             </label>
 
             <label>
-              Details
+              Today's note
               <textarea
                 required
-                rows={6}
-                value={form.description}
-                onChange={(event) => handleChange("description", event.target.value)}
-                placeholder="Share the important details, errors, or expected outcome."
+                rows={8}
+                value={form.note}
+                onChange={(event) => handleChange("note", event.target.value)}
+                placeholder="Record appetite, mood, vitals, medication, mobility, incidents, and any change from the last note."
               />
             </label>
 
@@ -202,40 +208,94 @@ function App() {
               ) : (
                 <Send size={18} aria-hidden="true" />
               )}
-              {isSubmitting ? "Submitting" : "Submit ticket"}
+              {isSubmitting ? "Sending to n8n" : "Submit note"}
             </button>
 
             {notice && <p className="notice">{notice}</p>}
           </form>
 
-          <aside className="ticket-panel" aria-label="Recent tickets">
+          <aside className="note-panel" aria-label="Latest notes">
             <div className="section-heading">
               <div>
-                <p className="eyebrow">Queue</p>
-                <h2>Recent tickets</h2>
+                <p className="eyebrow">Live queue</p>
+                <h2>Latest notes</h2>
               </div>
               <ArrowUpRight size={20} aria-hidden="true" />
             </div>
 
-            <div className="ticket-list">
-              {tickets.map((ticket) => (
-                <article className="ticket-card" key={ticket.id}>
-                  <div className="ticket-card__top">
-                    <span className="ticket-id">{ticket.id}</span>
-                    <span className={`priority priority-${ticket.priority.toLowerCase()}`}>
-                      {ticket.priority}
+            <div className="note-list">
+              {latestNotes.map((note) => (
+                <article className="note-card" key={note.id}>
+                  <div className="note-card__top">
+                    <span>
+                      {note.patientName} - {note.room}
+                    </span>
+                    <span className={`status-badge status-${note.status.toLowerCase()}`}>
+                      {note.status}
                     </span>
                   </div>
-                  <h3>{ticket.subject}</h3>
-                  <p>{ticket.description}</p>
-                  <div className="ticket-meta">
-                    <span>{ticket.category}</span>
-                    <span>{ticket.status}</span>
+                  <p>{note.content}</p>
+                  <div className="note-meta">
+                    <span>{note.author}</span>
+                    <span>{formatTime(note.createdAt)}</span>
                   </div>
                 </article>
               ))}
             </div>
           </aside>
+        </section>
+
+        <section className="patient-table-section" aria-label="Patient status table">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Patient board</p>
+              <h2>Status and latest 3 notes</h2>
+            </div>
+          </div>
+
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Room</th>
+                  <th>Status</th>
+                  <th>Latest 3 notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {patients.map((patient) => {
+                  const Icon = statusIcon[patient.status];
+
+                  return (
+                    <tr key={patient.id}>
+                      <td>
+                        <strong>{patient.name}</strong>
+                        <span>{patient.age} years old</span>
+                      </td>
+                      <td>{patient.room}</td>
+                      <td>
+                        <span className={`status-badge status-${patient.status.toLowerCase()}`}>
+                          <Icon size={15} aria-hidden="true" />
+                          {patient.status}
+                        </span>
+                      </td>
+                      <td>
+                        <ol className="compact-notes">
+                          {patient.notes.slice(0, 3).map((note) => (
+                            <li key={note.id}>
+                              <span>{formatTime(note.createdAt)}</span>
+                              {note.content}
+                            </li>
+                          ))}
+                        </ol>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </section>
       </section>
     </main>
