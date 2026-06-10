@@ -60,7 +60,7 @@ export async function createTicket(data: TicketFormData): Promise<Ticket> {
   }
 
   if (n8nWebhookUrl) {
-    await fetch(n8nWebhookUrl, {
+    const response = await fetch(n8nWebhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -70,6 +70,12 @@ export async function createTicket(data: TicketFormData): Promise<Ticket> {
         ticket: optimisticTicket,
       }),
     });
+
+    if (!response.ok) {
+      throw new Error(`Ticket saved, but n8n returned ${response.status}.`);
+    }
+  } else {
+    throw new Error("Ticket saved, but VITE_N8N_WEBHOOK_URL is not configured.");
   }
 
   return optimisticTicket;
