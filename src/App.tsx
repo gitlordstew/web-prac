@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   AlertTriangle,
@@ -12,15 +12,16 @@ import {
   UserRound,
 } from "lucide-react";
 import {
+  fetchPatientBoard,
   Patient,
   PatientNoteFormData,
   PatientStatus,
-  seedPatients,
   submitPatientNote,
 } from "./lib/patients";
+import { hasSupabaseConfig, supabase } from "./lib/supabase";
 
 const initialForm: PatientNoteFormData = {
-  patientId: seedPatients[0].id,
+  patientId: "",
   author: "",
   note: "",
 };
@@ -42,11 +43,65 @@ const formatTime = (value: string) =>
 
 function App() {
   const [form, setForm] = useState<PatientNoteFormData>(initialForm);
-  const [patients, setPatients] = useState<Patient[]>(seedPatients);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [isLoadingBoard, setIsLoadingBoard] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
   const selectedPatient = patients.find((patient) => patient.id === form.patientId) ?? patients[0];
+
+  const loadPatientBoard = async (showLoading = false) => {
+    if (showLoading) {
+      setIsLoadingBoard(true);
+    }
+
+    try {
+      const board = await fetchPatientBoard();
+      setPatients(board);
+      setNotice((current) =>
+        current === "Unable to load live patient data." ? null : current,
+      );
+
+      setForm((current) =>
+        current.patientId || !board[0] ? current : { ...current, patientId: board[0].id },
+      );
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Unable to load live patient data.");
+    } finally {
+      if (showLoading) {
+        setIsLoadingBoard(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    void loadPatientBoard(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hasSupabaseConfig || !supabase) {
+      return undefined;
+    }
+
+    const client = supabase;
+    const channel = client
+      .channel("care-status-live-board")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "patient_notes" },
+        () => void loadPatientBoard(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "patients" },
+        () => void loadPatientBoard(),
+      )
+      .subscribe();
+
+    return () => {
+      void client.removeChannel(channel);
+    };
+  }, []);
 
   const statusCounts = useMemo(
     () =>
@@ -88,23 +143,15 @@ function App() {
     setNotice(null);
 
     try {
+      if (!selectedPatient) {
+        throw new Error("Select a patient before submitting a note.");
+      }
+
       const note = await submitPatientNote(form, selectedPatient);
 
-      setPatients((current) =>
-        current.map((patient) =>
-          patient.id === selectedPatient.id
-            ? {
-                ...patient,
-                status: note.status,
-                notes: [note, ...patient.notes].slice(0, 6),
-              }
-            : patient,
-        ),
-      );
       setForm((current) => ({ ...current, author: "", note: "" }));
-      setNotice(
-        `${selectedPatient.name}'s note was sent to n8n. Demo status is ${note.status}; Supabase should use the AI result from your workflow.`,
-      );
+      setNotice(`${selectedPatient.name}'s note was sent to n8n and the live board is refreshing.`);
+      await loadPatientBoard();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Unable to submit patient note.");
     } finally {
@@ -159,6 +206,7 @@ function App() {
               <select
                 value={form.patientId}
                 onChange={(event) => handleChange("patientId", event.target.value)}
+                disabled={!patients.length}
               >
                 {patients.map((patient) => (
                   <option key={patient.id} value={patient.id}>
@@ -171,14 +219,18 @@ function App() {
             <div className="patient-snapshot">
               <div>
                 <span className="snapshot-label">Current status</span>
-                <strong className={`status-badge status-${selectedPatient.status.toLowerCase()}`}>
-                  {selectedPatient.status}
-                </strong>
+                {selectedPatient ? (
+                  <strong className={`status-badge status-${selectedPatient.status.toLowerCase()}`}>
+                    {selectedPatient.status}
+                  </strong>
+                ) : (
+                  <strong>No live patient selected</strong>
+                )}
               </div>
               <div>
                 <span className="snapshot-label">Primary contact</span>
-                <strong>{selectedPatient.primaryContact}</strong>
-                <span>{selectedPatient.primaryContactEmail}</span>
+                <strong>{selectedPatient?.primaryContact ?? "Unavailable"}</strong>
+                <span>{selectedPatient?.primaryContactEmail ?? "Waiting for data"}</span>
               </div>
             </div>
 
@@ -203,7 +255,11 @@ function App() {
               />
             </label>
 
-            <button className="primary-button" type="submit" disabled={isSubmitting}>
+            <button
+              className="primary-button"
+              type="submit"
+              disabled={isSubmitting || !selectedPatient}
+            >
               {isSubmitting ? (
                 <Loader2 className="spin" size={18} aria-hidden="true" />
               ) : (
@@ -225,6 +281,10 @@ function App() {
             </div>
 
             <div className="note-list">
+              {isLoadingBoard && <p className="empty-state">Loading live notes...</p>}
+              {!isLoadingBoard && !latestNotes.length && (
+                <p className="empty-state">No notes found in Supabase yet.</p>
+              )}
               {latestNotes.map((note) => (
                 <article className="note-card" key={note.id}>
                   <div className="note-card__top">
@@ -265,6 +325,11 @@ function App() {
                 </tr>
               </thead>
               <tbody>
+                {!patients.length && (
+                  <tr>
+                    <td colSpan={4}>No patients found in Supabase yet.</td>
+                  </tr>
+                )}
                 {patients.map((patient) => {
                   const Icon = statusIcon[patient.status];
 

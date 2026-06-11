@@ -285,6 +285,17 @@ textarea:focus {
   line-height: 1.45;
 }
 
+.empty-state {
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.45;
+}
+
 .note-list {
   display: grid;
   gap: 12px;

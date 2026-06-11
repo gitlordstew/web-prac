@@ -1,3 +1,5 @@
+import { hasSupabaseConfig, supabase } from "./supabase";
+
 export type PatientStatus = "Stable" | "Improving" | "Watch" | "Critical";
 
 export type PatientNote = {
@@ -28,6 +30,7 @@ export type PatientNoteFormData = {
 };
 
 const n8nWebhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL as string | undefined;
+const n8nDataWebhookUrl = import.meta.env.VITE_N8N_DATA_WEBHOOK_URL as string | undefined;
 
 export const patientStatuses: PatientStatus[] = ["Stable", "Improving", "Watch", "Critical"];
 
@@ -215,6 +218,143 @@ export const seedPatients: Patient[] = [
     ],
   },
 ];
+
+type PatientRow = {
+  id: string;
+  name?: string | null;
+  age?: number | null;
+  room?: string | null;
+  status?: string | null;
+  primary_contact_id?: string | null;
+  primary_contact_name?: string | null;
+  primary_contact_email?: string | null;
+  primary_contact?: {
+    id?: string;
+    name?: string;
+    email?: string;
+  } | null;
+};
+
+type PatientNoteRow = {
+  id: string;
+  patient_id?: string | null;
+  content?: string | null;
+  ai_status?: string | null;
+  status?: string | null;
+  created_at?: string | null;
+  author?: string | null;
+};
+
+const isPatientStatus = (value: unknown): value is PatientStatus =>
+  typeof value === "string" && patientStatuses.includes(value as PatientStatus);
+
+const normalizeStatus = (value: unknown): PatientStatus =>
+  isPatientStatus(value) ? value : "Watch";
+
+const normalizeNote = (row: PatientNoteRow): PatientNote => ({
+  id: String(row.id),
+  patientId: String(row.patient_id ?? ""),
+  content: row.content ?? "No note content.",
+  status: normalizeStatus(row.ai_status ?? row.status),
+  createdAt: row.created_at ?? new Date().toISOString(),
+  author: row.author ?? "Unknown caregiver",
+});
+
+const normalizePatient = (row: PatientRow, notes: PatientNote[]): Patient => {
+  const contact = row.primary_contact;
+  const patientNotes = notes
+    .filter((note) => note.patientId === row.id)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+
+  return {
+    id: String(row.id),
+    name: row.name ?? "Unnamed patient",
+    age: Number(row.age ?? 0),
+    room: row.room ?? "Unassigned",
+    primaryContactId: row.primary_contact_id ?? contact?.id ?? "",
+    primaryContact: row.primary_contact_name ?? contact?.name ?? "Primary contact",
+    primaryContactEmail: row.primary_contact_email ?? contact?.email ?? "",
+    status: normalizeStatus(row.status ?? patientNotes[0]?.status),
+    notes: patientNotes,
+  };
+};
+
+const normalizeBoardPayload = (payload: unknown): Patient[] => {
+  const data = payload as {
+    patients?: Patient[];
+    data?: { patients?: Patient[] };
+  };
+
+  const patients = data.patients ?? data.data?.patients ?? [];
+
+  return patients.map((patient) => ({
+    ...patient,
+    status: normalizeStatus(patient.status),
+    notes: (patient.notes ?? []).map((note) => ({
+      ...note,
+      status: normalizeStatus(note.status),
+    })),
+  }));
+};
+
+async function fetchPatientBoardFromN8n(): Promise<Patient[]> {
+  if (!n8nDataWebhookUrl) {
+    throw new Error("VITE_N8N_DATA_WEBHOOK_URL is not configured.");
+  }
+
+  const response = await fetch(n8nDataWebhookUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      event: "patient_board.list",
+      limit: 50,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`n8n data fetch returned ${response.status}.`);
+  }
+
+  return normalizeBoardPayload(await response.json());
+}
+
+async function fetchPatientBoardFromSupabase(): Promise<Patient[]> {
+  if (!hasSupabaseConfig || !supabase) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const [{ data: patientRows, error: patientError }, { data: noteRows, error: noteError }] =
+    await Promise.all([
+      supabase.from("patients").select("*").order("name", { ascending: true }),
+      supabase
+        .from("patient_notes")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(100),
+    ]);
+
+  if (patientError) {
+    throw new Error(patientError.message);
+  }
+
+  if (noteError) {
+    throw new Error(noteError.message);
+  }
+
+  const notes = ((noteRows ?? []) as PatientNoteRow[]).map(normalizeNote);
+
+  return ((patientRows ?? []) as PatientRow[]).map((patient) => normalizePatient(patient, notes));
+}
+
+export async function fetchPatientBoard(): Promise<Patient[]> {
+  if (n8nDataWebhookUrl) {
+    return fetchPatientBoardFromN8n();
+  }
+
+  return fetchPatientBoardFromSupabase();
+}
 
 const fallbackStatusFromNote = (note: string): PatientStatus => {
   const text = note.toLowerCase();
