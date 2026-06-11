@@ -30,7 +30,6 @@ export type PatientNoteFormData = {
 };
 
 const n8nWebhookUrl = import.meta.env.VITE_N8N_WEBHOOK_URL as string | undefined;
-const n8nDataWebhookUrl = import.meta.env.VITE_N8N_DATA_WEBHOOK_URL as string | undefined;
 
 export const patientStatuses: PatientStatus[] = ["Stable", "Improving", "Watch", "Critical"];
 
@@ -233,6 +232,11 @@ type PatientRow = {
     name?: string;
     email?: string;
   } | null;
+  primary_contacts?: {
+    id?: string;
+    full_name?: string;
+    email?: string;
+  } | null;
 };
 
 type PatientNoteRow = {
@@ -262,6 +266,9 @@ const normalizeNote = (row: PatientNoteRow): PatientNote => ({
 
 const normalizePatient = (row: PatientRow, notes: PatientNote[]): Patient => {
   const contact = row.primary_contact;
+  const joinedContact = Array.isArray(row.primary_contacts)
+    ? row.primary_contacts[0]
+    : row.primary_contacts;
   const patientNotes = notes
     .filter((note) => note.patientId === row.id)
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
@@ -271,63 +278,26 @@ const normalizePatient = (row: PatientRow, notes: PatientNote[]): Patient => {
     name: row.name ?? "Unnamed patient",
     age: Number(row.age ?? 0),
     room: row.room ?? "Unassigned",
-    primaryContactId: row.primary_contact_id ?? contact?.id ?? "",
-    primaryContact: row.primary_contact_name ?? contact?.name ?? "Primary contact",
-    primaryContactEmail: row.primary_contact_email ?? contact?.email ?? "",
+    primaryContactId: row.primary_contact_id ?? contact?.id ?? joinedContact?.id ?? "",
+    primaryContact:
+      row.primary_contact_name ?? contact?.name ?? joinedContact?.full_name ?? "Primary contact",
+    primaryContactEmail: row.primary_contact_email ?? contact?.email ?? joinedContact?.email ?? "",
     status: normalizeStatus(row.status ?? patientNotes[0]?.status),
     notes: patientNotes,
   };
 };
 
-const normalizeBoardPayload = (payload: unknown): Patient[] => {
-  const data = payload as {
-    patients?: Patient[];
-    data?: { patients?: Patient[] };
-  };
-
-  const patients = data.patients ?? data.data?.patients ?? [];
-
-  return patients.map((patient) => ({
-    ...patient,
-    status: normalizeStatus(patient.status),
-    notes: (patient.notes ?? []).map((note) => ({
-      ...note,
-      status: normalizeStatus(note.status),
-    })),
-  }));
-};
-
-async function fetchPatientBoardFromN8n(): Promise<Patient[]> {
-  if (!n8nDataWebhookUrl) {
-    throw new Error("VITE_N8N_DATA_WEBHOOK_URL is not configured.");
-  }
-
-  const response = await fetch(n8nDataWebhookUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      event: "patient_board.list",
-      limit: 50,
-    }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`n8n data fetch returned ${response.status}.`);
-  }
-
-  return normalizeBoardPayload(await response.json());
-}
-
-async function fetchPatientBoardFromSupabase(): Promise<Patient[]> {
+export async function fetchPatientBoard(): Promise<Patient[]> {
   if (!hasSupabaseConfig || !supabase) {
     throw new Error("Supabase is not configured.");
   }
 
   const [{ data: patientRows, error: patientError }, { data: noteRows, error: noteError }] =
     await Promise.all([
-      supabase.from("patients").select("*").order("name", { ascending: true }),
+      supabase
+        .from("patients")
+        .select("*, primary_contacts(id, full_name, email)")
+        .order("name", { ascending: true }),
       supabase
         .from("patient_notes")
         .select("*")
@@ -346,14 +316,6 @@ async function fetchPatientBoardFromSupabase(): Promise<Patient[]> {
   const notes = ((noteRows ?? []) as PatientNoteRow[]).map(normalizeNote);
 
   return ((patientRows ?? []) as PatientRow[]).map((patient) => normalizePatient(patient, notes));
-}
-
-export async function fetchPatientBoard(): Promise<Patient[]> {
-  if (n8nDataWebhookUrl) {
-    return fetchPatientBoardFromN8n();
-  }
-
-  return fetchPatientBoardFromSupabase();
 }
 
 const fallbackStatusFromNote = (note: string): PatientStatus => {
