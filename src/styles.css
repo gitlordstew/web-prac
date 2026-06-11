@@ -240,6 +240,9 @@ textarea:focus {
 }
 
 .patient-snapshot > div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
   min-height: 78px;
   padding: 13px;
   border: 1px solid var(--line);
@@ -250,7 +253,10 @@ textarea:focus {
 
 .patient-snapshot strong,
 .patient-snapshot span:not(.snapshot-label) {
+  display: block;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 .snapshot-label {
@@ -536,6 +542,9 @@ td > span {
 }
 
 .modal-summary > div {
+  display: grid;
+  align-content: start;
+  gap: 4px;
   min-width: 0;
   min-height: 86px;
   padding: 14px;
@@ -546,7 +555,10 @@ td > span {
 
 .modal-summary strong,
 .modal-summary span:not(.snapshot-label) {
+  display: block;
   overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
 }
 
 .modal-grid {

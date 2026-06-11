@@ -68,6 +68,9 @@ function App() {
       setForm((current) =>
         current.patientId || !board[0] ? current : { ...current, patientId: board[0].id },
       );
+      setActivePatientId((current) =>
+        current && !board.some((patient) => patient.id === current) ? null : current,
+      );
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Unable to load live patient data.");
     } finally {
@@ -97,6 +100,11 @@ function App() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "patients" },
+        () => void loadPatientBoard(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "primary_contacts" },
         () => void loadPatientBoard(),
       )
       .subscribe();
