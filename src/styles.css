@@ -28,6 +28,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 button,
@@ -35,6 +36,10 @@ input,
 select,
 textarea {
   font: inherit;
+}
+
+button {
+  color: inherit;
 }
 
 .app-shell {
@@ -56,7 +61,8 @@ textarea {
 .note-meta,
 .status-pill,
 .primary-button,
-.status-badge {
+.status-badge,
+.modal-header {
   display: flex;
   align-items: center;
 }
@@ -133,6 +139,7 @@ h2 {
   margin-top: 16px;
   font-size: 1.8rem;
   font-weight: 850;
+  overflow-wrap: anywhere;
 }
 
 .summary-grid p {
@@ -142,7 +149,7 @@ h2 {
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(380px, 1.1fr);
+  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
   gap: 18px;
   align-items: start;
 }
@@ -238,6 +245,12 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-soft);
+  min-width: 0;
+}
+
+.patient-snapshot strong,
+.patient-snapshot span:not(.snapshot-label) {
+  overflow-wrap: anywhere;
 }
 
 .snapshot-label {
@@ -272,6 +285,27 @@ textarea:focus {
 .primary-button:disabled {
   cursor: wait;
   opacity: 0.72;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background 160ms ease;
+}
+
+.icon-button:hover {
+  border-color: #b9c6bd;
+  background: var(--surface-soft);
 }
 
 .spin {
@@ -311,11 +345,17 @@ textarea:focus {
 
 .note-card__top {
   justify-content: space-between;
+  align-items: flex-start;
   gap: 10px;
   margin-bottom: 12px;
   color: #33413b;
   font-size: 0.88rem;
   font-weight: 850;
+}
+
+.note-card__top > span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .note-card p {
@@ -334,6 +374,7 @@ textarea:focus {
   color: #53605a;
   font-size: 0.82rem;
   font-weight: 750;
+  flex-wrap: wrap;
 }
 
 .status-badge {
@@ -398,6 +439,7 @@ th {
 td {
   color: #33413b;
   font-size: 0.92rem;
+  overflow-wrap: anywhere;
 }
 
 td strong {
@@ -409,6 +451,27 @@ td strong {
 td > span {
   color: var(--muted);
   font-size: 0.82rem;
+}
+
+.patient-link {
+  display: block;
+  margin: 0 0 4px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-weight: 850;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(19, 122, 82, 0.28);
+  text-underline-offset: 4px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+
+.patient-link:hover {
+  color: var(--green);
+  text-decoration-color: currentColor;
 }
 
 .compact-notes {
@@ -428,6 +491,108 @@ td > span {
   color: var(--muted);
   font-size: 0.76rem;
   font-weight: 800;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(23, 32, 29, 0.42);
+}
+
+.patient-modal {
+  width: min(980px, 100%);
+  max-height: min(820px, calc(100vh - 44px));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 28px 90px rgba(23, 32, 29, 0.24);
+}
+
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.modal-header h2 {
+  font-size: 1.45rem;
+}
+
+.modal-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  padding: 22px;
+}
+
+.modal-summary > div {
+  min-width: 0;
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-soft);
+}
+
+.modal-summary strong,
+.modal-summary span:not(.snapshot-label) {
+  overflow-wrap: anywhere;
+}
+
+.modal-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+  gap: 18px;
+  padding: 0 22px 22px;
+}
+
+.modal-grid h3 {
+  margin-bottom: 12px;
+  font-size: 1rem;
+  letter-spacing: 0;
+}
+
+.status-timeline,
+.all-notes {
+  display: grid;
+  gap: 12px;
+}
+
+.status-timeline article,
+.all-notes article {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfa;
+}
+
+.status-timeline p,
+.all-notes p {
+  margin: 10px 0;
+  color: #33413b;
+  line-height: 1.5;
+}
+
+.status-timeline small {
+  color: var(--muted);
+  font-weight: 750;
+  line-height: 1.4;
+}
+
+.all-notes {
+  max-height: 440px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 @keyframes spin {
@@ -450,11 +615,126 @@ td > span {
   .content-grid {
     grid-template-columns: 1fr;
   }
+
+  .monitor-form {
+    order: 1;
+  }
+
+  .note-panel {
+    order: 2;
+  }
+
+  .modal-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .all-notes {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .summary-grid article {
+    min-height: 98px;
+    padding: 14px;
+  }
+
+  .summary-grid span {
+    margin-top: 12px;
+    font-size: 1.45rem;
+  }
+
+  .summary-grid p {
+    font-size: 0.84rem;
+    line-height: 1.25;
+  }
+
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+  }
+
+  table {
+    min-width: 0;
+  }
+
+  thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  tbody {
+    display: grid;
+    gap: 12px;
+  }
+
+  tr {
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: #fbfcfa;
+  }
+
+  td {
+    display: grid;
+    grid-template-columns: minmax(86px, 0.34fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e6ece6;
+  }
+
+  td:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.74rem;
+    font-weight: 850;
+    text-transform: uppercase;
+  }
+
+  td > .status-badge {
+    align-self: start;
+  }
+
+  .compact-notes {
+    padding-left: 16px;
+  }
 }
 
 @media (max-width: 560px) {
   .app-shell {
     padding: 12px;
+  }
+
+  h1 {
+    font-size: 2.25rem;
+  }
+
+  h2 {
+    font-size: 1.05rem;
   }
 
   .monitor-form,
@@ -468,8 +748,54 @@ td > span {
     grid-template-columns: 1fr;
   }
 
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
   .note-meta {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .note-card__top {
+    flex-direction: column;
+  }
+
+  .status-pill {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .modal-backdrop {
+    align-items: stretch;
+    padding: 10px;
+  }
+
+  .patient-modal {
+    max-height: calc(100vh - 20px);
+  }
+
+  .modal-header,
+  .modal-summary,
+  .modal-grid {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .modal-summary {
+    grid-template-columns: 1fr;
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+}
+
+@media (max-width: 400px) {
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  td {
+    grid-template-columns: 1fr;
+    gap: 6px;
   }
 }

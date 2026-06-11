@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   TrendingUp,
   UserRound,
+  X,
 } from "lucide-react";
 import {
   fetchPatientBoard,
@@ -47,8 +48,10 @@ function App() {
   const [isLoadingBoard, setIsLoadingBoard] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [activePatientId, setActivePatientId] = useState<string | null>(null);
 
   const selectedPatient = patients.find((patient) => patient.id === form.patientId) ?? patients[0];
+  const activePatient = patients.find((patient) => patient.id === activePatientId) ?? null;
 
   const loadPatientBoard = async (showLoading = false) => {
     if (showLoading) {
@@ -335,18 +338,24 @@ function App() {
 
                   return (
                     <tr key={patient.id}>
-                      <td>
-                        <strong>{patient.name}</strong>
+                      <td data-label="Patient">
+                        <button
+                          className="patient-link"
+                          type="button"
+                          onClick={() => setActivePatientId(patient.id)}
+                        >
+                          {patient.name}
+                        </button>
                         <span>{patient.age} years old</span>
                       </td>
-                      <td>{patient.room}</td>
-                      <td>
+                      <td data-label="Room">{patient.room}</td>
+                      <td data-label="Status">
                         <span className={`status-badge status-${patient.status.toLowerCase()}`}>
                           <Icon size={15} aria-hidden="true" />
                           {patient.status}
                         </span>
                       </td>
-                      <td>
+                      <td data-label="Latest notes">
                         <ol className="compact-notes">
                           {patient.notes.slice(0, 3).map((note) => (
                             <li key={note.id}>
@@ -363,6 +372,101 @@ function App() {
             </table>
           </div>
         </section>
+
+        {activePatient && (
+          <div
+            className="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="patient-modal-title"
+            onClick={() => setActivePatientId(null)}
+          >
+            <section className="patient-modal" onClick={(event) => event.stopPropagation()}>
+              <header className="modal-header">
+                <div>
+                  <p className="eyebrow">Patient details</p>
+                  <h2 id="patient-modal-title">{activePatient.name}</h2>
+                </div>
+                <button
+                  className="icon-button"
+                  type="button"
+                  aria-label="Close patient details"
+                  onClick={() => setActivePatientId(null)}
+                >
+                  <X size={20} aria-hidden="true" />
+                </button>
+              </header>
+
+              <div className="modal-summary">
+                <div>
+                  <span className="snapshot-label">Current status</span>
+                  <strong className={`status-badge status-${activePatient.status.toLowerCase()}`}>
+                    {activePatient.status}
+                  </strong>
+                </div>
+                <div>
+                  <span className="snapshot-label">Room</span>
+                  <strong>{activePatient.room}</strong>
+                </div>
+                <div>
+                  <span className="snapshot-label">Age</span>
+                  <strong>{activePatient.age} years old</strong>
+                </div>
+                <div>
+                  <span className="snapshot-label">Primary contact</span>
+                  <strong>{activePatient.primaryContact}</strong>
+                  <span>{activePatient.primaryContactEmail}</span>
+                </div>
+              </div>
+
+              <div className="modal-grid">
+                <section>
+                  <h3>Latest 3 status updates</h3>
+                  <div className="status-timeline">
+                    {activePatient.notes.slice(0, 3).map((note) => (
+                      <article key={note.id}>
+                        <span className={`status-badge status-${note.status.toLowerCase()}`}>
+                          {note.status}
+                        </span>
+                        <p>{note.content}</p>
+                        <small>
+                          {note.author} - {formatTime(note.createdAt)}
+                        </small>
+                      </article>
+                    ))}
+                    {!activePatient.notes.length && (
+                      <p className="empty-state">No status updates recorded yet.</p>
+                    )}
+                  </div>
+                </section>
+
+                <section>
+                  <h3>All notes</h3>
+                  <div className="all-notes">
+                    {activePatient.notes.map((note) => (
+                      <article key={note.id}>
+                        <div className="note-card__top">
+                          <span>{formatTime(note.createdAt)}</span>
+                          <span className={`status-badge status-${note.status.toLowerCase()}`}>
+                            {note.status}
+                          </span>
+                        </div>
+                        <p>{note.content}</p>
+                        <div className="note-meta">
+                          <span>{note.author}</span>
+                          <span>{note.id}</span>
+                        </div>
+                      </article>
+                    ))}
+                    {!activePatient.notes.length && (
+                      <p className="empty-state">No notes have been submitted for this patient.</p>
+                    )}
+                  </div>
+                </section>
+              </div>
+            </section>
+          </div>
+        )}
       </section>
     </main>
   );
