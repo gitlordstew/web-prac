@@ -457,6 +457,11 @@ function App() {
                   <span className="snapshot-label">Cases</span>
                   <strong>{getCaseNames(activePatient)}</strong>
                 </div>
+                <div className="modal-contact-card">
+                  <span className="snapshot-label">Primary contact</span>
+                  <strong>{activePatient.primaryContact || "Unavailable"}</strong>
+                  <span>{activePatient.primaryContactEmail || "No email recorded"}</span>
+                </div>
               </div>
 
               <div className="modal-grid">

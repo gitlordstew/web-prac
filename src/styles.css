@@ -469,28 +469,72 @@ textarea:focus {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
+  box-shadow: var(--shadow-soft);
 }
 
 table {
   width: 100%;
   min-width: 940px;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 19%;
+}
+
+th:nth-child(2),
+td:nth-child(2) {
+  width: 10%;
+}
+
+th:nth-child(3),
+td:nth-child(3) {
+  width: 23%;
+}
+
+th:nth-child(4),
+td:nth-child(4) {
+  width: 14%;
 }
 
 th,
 td {
   padding: 15px 16px;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid #e8eee8;
   text-align: left;
   vertical-align: top;
 }
 
 th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   background: #f8faf7;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 850;
   text-transform: uppercase;
+}
+
+th + th,
+td + td {
+  border-left: 1px solid #edf2ed;
+}
+
+tbody tr {
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+tbody tr:hover {
+  background: #fbfdfb;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 td {
@@ -564,7 +608,7 @@ td > span {
 .patient-modal {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  width: min(1180px, 100%);
+  width: min(1220px, 100%);
   max-height: min(860px, calc(100vh - 48px));
   overflow: auto;
   border: 1px solid var(--line);
@@ -581,7 +625,9 @@ td > span {
   gap: 14px;
   padding: 22px 28px;
   border-bottom: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.96);
+  background:
+    linear-gradient(90deg, rgba(19, 122, 82, 0.08), transparent 48%),
+    rgba(255, 255, 255, 0.98);
 }
 
 .modal-header h2 {
@@ -591,10 +637,16 @@ td > span {
 
 .modal-summary {
   display: grid;
-  grid-template-columns: minmax(150px, 0.7fr) minmax(120px, 0.5fr) minmax(120px, 0.55fr) minmax(240px, 1.25fr);
+  grid-template-columns:
+    minmax(145px, 0.7fr)
+    minmax(110px, 0.5fr)
+    minmax(120px, 0.55fr)
+    minmax(220px, 1.05fr)
+    minmax(240px, 1.2fr);
   gap: 12px;
   padding: 22px 28px 18px;
   border-bottom: 1px solid #eef2ee;
+  background: #fbfcfa;
 }
 
 .modal-summary > div {
@@ -606,7 +658,8 @@ td > span {
   padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--surface-soft);
+  background: #ffffff;
+  box-shadow: 0 7px 18px rgba(23, 32, 29, 0.035);
 }
 
 .modal-summary strong,
@@ -617,16 +670,28 @@ td > span {
   line-height: 1.35;
 }
 
+.modal-contact-card {
+  background: #eef4f0 !important;
+}
+
+.modal-contact-card span:not(.snapshot-label) {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 .modal-grid {
   display: grid;
   grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.22fr);
   gap: 20px;
   min-height: 0;
   padding: 22px 28px 28px;
+  background: #ffffff;
 }
 
 .modal-grid h3 {
   margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e8eee8;
   font-size: 1.02rem;
   letter-spacing: 0;
 }
@@ -654,6 +719,19 @@ td > span {
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 7px 18px rgba(23, 32, 29, 0.035);
+}
+
+.case-detail-list article {
+  border-left: 4px solid rgba(15, 118, 110, 0.35);
+}
+
+.status-timeline article {
+  border-left: 4px solid rgba(37, 99, 235, 0.22);
+}
+
+.all-notes article {
+  display: grid;
+  align-content: start;
 }
 
 .status-timeline p,
@@ -780,6 +858,7 @@ td > span {
 
   table {
     min-width: 0;
+    border-spacing: 0;
   }
 
   thead {
@@ -802,12 +881,21 @@ td > span {
     background: #fbfcfa;
   }
 
+  tbody tr:hover {
+    background: #fbfcfa;
+  }
+
   td {
     display: grid;
     grid-template-columns: minmax(86px, 0.34fr) minmax(0, 1fr);
     gap: 12px;
     padding: 10px 0;
     border-bottom: 1px solid #e6ece6;
+  }
+
+  th + th,
+  td + td {
+    border-left: 0;
   }
 
   td:last-child {
