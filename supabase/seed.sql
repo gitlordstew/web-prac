@@ -46,6 +46,43 @@ alter table patient_notes add column if not exists ai_reason text;
 
 create index if not exists patient_cases_patient_id_idx on patient_cases(patient_id);
 
+alter table primary_contacts enable row level security;
+alter table patients enable row level security;
+alter table patient_cases enable row level security;
+alter table patient_notes enable row level security;
+
+drop policy if exists "Allow public read primary contacts" on primary_contacts;
+drop policy if exists "Allow public read patients" on patients;
+drop policy if exists "Allow public read patient cases" on patient_cases;
+drop policy if exists "Allow public read patient notes" on patient_notes;
+drop policy if exists "Allow public insert patient notes" on patient_notes;
+drop policy if exists "Allow public update patient status" on patients;
+
+create policy "Allow public read primary contacts"
+  on primary_contacts for select
+  using (true);
+
+create policy "Allow public read patients"
+  on patients for select
+  using (true);
+
+create policy "Allow public read patient cases"
+  on patient_cases for select
+  using (true);
+
+create policy "Allow public read patient notes"
+  on patient_notes for select
+  using (true);
+
+create policy "Allow public insert patient notes"
+  on patient_notes for insert
+  with check (true);
+
+create policy "Allow public update patient status"
+  on patients for update
+  using (true)
+  with check (true);
+
 do $$
 begin
   if exists (

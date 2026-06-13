@@ -460,7 +460,7 @@ function App() {
               </div>
 
               <div className="modal-grid">
-                <section>
+                <section className="modal-section modal-section--cases">
                   <h3>Case monitoring</h3>
                   <div className="case-detail-list">
                     {activePatient.cases.map((patientCase) => (
@@ -475,7 +475,7 @@ function App() {
                   </div>
                 </section>
 
-                <section>
+                <section className="modal-section modal-section--timeline">
                   <h3>Latest 3 status updates</h3>
                   <div className="status-timeline">
                     {activePatient.notes.slice(0, 3).map((note) => (
@@ -496,7 +496,7 @@ function App() {
                   </div>
                 </section>
 
-                <section>
+                <section className="modal-section modal-section--all-notes">
                   <h3>All notes</h3>
                   <div className="all-notes">
                     {activePatient.notes.map((note) => (

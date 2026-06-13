@@ -17,7 +17,8 @@
   --blue: #2563eb;
   --amber: #b7791f;
   --red: #c2410c;
-  --shadow: 0 18px 58px rgba(23, 32, 29, 0.08);
+  --shadow: 0 16px 44px rgba(23, 32, 29, 0.07);
+  --shadow-soft: 0 8px 24px rgba(23, 32, 29, 0.05);
 }
 
 * {
@@ -44,14 +45,14 @@ button {
 
 .app-shell {
   min-height: 100vh;
-  padding: 28px;
+  padding: 32px 28px 44px;
   background:
-    linear-gradient(135deg, rgba(19, 122, 82, 0.08), transparent 36%),
-    linear-gradient(315deg, rgba(37, 99, 235, 0.06), transparent 32%), #f5f7f4;
+    linear-gradient(135deg, rgba(19, 122, 82, 0.1), transparent 34%),
+    linear-gradient(315deg, rgba(15, 118, 110, 0.06), transparent 30%), #f6f8f5;
 }
 
 .workspace {
-  width: min(1240px, 100%);
+  width: min(1360px, 100%);
   margin: 0 auto;
 }
 
@@ -69,8 +70,9 @@ button {
 
 .topbar {
   justify-content: space-between;
-  gap: 18px;
-  margin-bottom: 22px;
+  align-items: flex-start;
+  gap: 24px;
+  margin-bottom: 26px;
 }
 
 .eyebrow {
@@ -91,9 +93,10 @@ p {
 
 h1 {
   margin-bottom: 0;
-  font-size: clamp(2rem, 6vw, 4.6rem);
-  line-height: 0.98;
+  font-size: clamp(2.45rem, 5vw, 4.35rem);
+  line-height: 1;
   letter-spacing: 0;
+  max-width: 920px;
 }
 
 h2 {
@@ -103,9 +106,10 @@ h2 {
 }
 
 .status-pill {
-  min-height: 40px;
+  min-height: 42px;
   gap: 8px;
-  padding: 9px 13px;
+  margin-top: 26px;
+  padding: 9px 16px;
   border: 1px solid rgba(19, 122, 82, 0.28);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.76);
@@ -117,17 +121,17 @@ h2 {
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   margin-bottom: 18px;
 }
 
 .summary-grid article {
-  min-height: 116px;
-  padding: 18px;
+  min-height: 112px;
+  padding: 20px 22px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 10px 35px rgba(23, 32, 29, 0.04);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
 }
 
 .summary-grid svg {
@@ -136,8 +140,9 @@ h2 {
 
 .summary-grid span {
   display: block;
-  margin-top: 16px;
-  font-size: 1.8rem;
+  margin-top: 18px;
+  font-size: 1.9rem;
+  line-height: 1;
   font-weight: 850;
   overflow-wrap: anywhere;
 }
@@ -149,8 +154,8 @@ h2 {
 
 .content-grid {
   display: grid;
-  grid-template-columns: minmax(360px, 0.9fr) minmax(0, 1.1fr);
-  gap: 18px;
+  grid-template-columns: minmax(380px, 0.84fr) minmax(520px, 1.16fr);
+  gap: 20px;
   align-items: start;
 }
 
@@ -159,19 +164,19 @@ h2 {
 .patient-table-section {
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   box-shadow: var(--shadow);
 }
 
 .monitor-form {
   display: grid;
-  gap: 16px;
-  padding: 22px;
+  gap: 17px;
+  padding: 24px;
 }
 
 .note-panel,
 .patient-table-section {
-  padding: 22px;
+  padding: 24px;
 }
 
 .patient-table-section {
@@ -181,7 +186,7 @@ h2 {
 .section-heading {
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .section-heading svg {
@@ -214,14 +219,14 @@ textarea {
 
 input,
 select {
-  min-height: 46px;
-  padding: 0 13px;
+  min-height: 48px;
+  padding: 0 14px;
 }
 
 textarea {
   resize: vertical;
-  min-height: 172px;
-  padding: 12px 13px;
+  min-height: 168px;
+  padding: 13px 14px;
   line-height: 1.45;
 }
 
@@ -235,24 +240,24 @@ textarea:focus {
 
 .patient-snapshot {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(150px, 0.42fr) minmax(0, 1fr);
   gap: 12px;
 }
 
 .patient-snapshot > div {
   display: grid;
   align-content: start;
-  gap: 4px;
-  min-height: 78px;
-  padding: 13px;
+  gap: 8px;
+  min-height: 94px;
+  padding: 15px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: var(--surface-soft);
+  background: #eef4f0;
   min-width: 0;
 }
 
 .case-snapshot {
-  grid-column: 1 / -1;
+  grid-column: auto;
 }
 
 .patient-snapshot strong,
@@ -265,7 +270,7 @@ textarea:focus {
 
 .snapshot-label {
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 4px;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 800;
@@ -275,7 +280,7 @@ textarea:focus {
 .case-chip-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 7px;
+  gap: 8px;
   min-width: 0;
 }
 
@@ -283,9 +288,9 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   max-width: 100%;
-  min-height: 28px;
+  min-height: 30px;
   gap: 6px;
-  padding: 5px 9px;
+  padding: 6px 10px;
   border: 1px solid rgba(15, 118, 110, 0.18);
   border-radius: 999px;
   background: rgba(15, 118, 110, 0.08);
@@ -308,7 +313,7 @@ textarea:focus {
 
 .primary-button {
   justify-content: center;
-  min-height: 48px;
+  min-height: 50px;
   gap: 9px;
   border: 0;
   border-radius: 8px;
@@ -377,14 +382,18 @@ textarea:focus {
 .note-list {
   display: grid;
   gap: 12px;
-  margin-top: 16px;
+  max-height: 540px;
+  margin-top: 18px;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .note-card {
-  padding: 15px;
+  padding: 17px 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfa;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(23, 32, 29, 0.035);
 }
 
 .note-card__top {
@@ -404,10 +413,10 @@ textarea:focus {
 
 .note-card p {
   display: -webkit-box;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   overflow: hidden;
   color: var(--muted);
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 3;
 }
@@ -457,6 +466,9 @@ textarea:focus {
 .table-wrap {
   margin-top: 16px;
   overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
 }
 
 table {
@@ -467,13 +479,14 @@ table {
 
 th,
 td {
-  padding: 14px;
+  padding: 15px 16px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: top;
 }
 
 th {
+  background: #f8faf7;
   color: var(--muted);
   font-size: 0.78rem;
   font-weight: 850;
@@ -543,49 +556,54 @@ td > span {
   z-index: 40;
   display: grid;
   place-items: center;
-  padding: 22px;
-  background: rgba(23, 32, 29, 0.42);
+  padding: 24px;
+  background: rgba(23, 32, 29, 0.5);
+  backdrop-filter: blur(4px);
 }
 
 .patient-modal {
-  width: min(980px, 100%);
-  max-height: min(820px, calc(100vh - 44px));
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  width: min(1180px, 100%);
+  max-height: min(860px, calc(100vh - 48px));
   overflow: auto;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
-  box-shadow: 0 28px 90px rgba(23, 32, 29, 0.24);
+  box-shadow: 0 30px 90px rgba(23, 32, 29, 0.28);
 }
 
 .modal-header {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
   justify-content: space-between;
   gap: 14px;
-  padding: 20px 22px;
+  padding: 22px 28px;
   border-bottom: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.96);
 }
 
 .modal-header h2 {
-  font-size: 1.45rem;
+  font-size: 1.55rem;
+  line-height: 1.15;
 }
 
 .modal-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: minmax(150px, 0.7fr) minmax(120px, 0.5fr) minmax(120px, 0.55fr) minmax(240px, 1.25fr);
   gap: 12px;
-  padding: 22px;
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid #eef2ee;
 }
 
 .modal-summary > div {
   display: grid;
   align-content: start;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
-  min-height: 86px;
-  padding: 14px;
+  min-height: 92px;
+  padding: 16px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--surface-soft);
@@ -601,15 +619,24 @@ td > span {
 
 .modal-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
-  gap: 18px;
-  padding: 0 22px 22px;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(0, 1.22fr);
+  gap: 20px;
+  min-height: 0;
+  padding: 22px 28px 28px;
 }
 
 .modal-grid h3 {
   margin-bottom: 12px;
-  font-size: 1rem;
+  font-size: 1.02rem;
   letter-spacing: 0;
+}
+
+.modal-section {
+  min-width: 0;
+}
+
+.modal-section--all-notes {
+  grid-column: 1 / -1;
 }
 
 .status-timeline,
@@ -622,16 +649,17 @@ td > span {
 .status-timeline article,
 .all-notes article,
 .case-detail-list article {
-  padding: 14px;
+  padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: #fbfcfa;
+  background: #ffffff;
+  box-shadow: 0 7px 18px rgba(23, 32, 29, 0.035);
 }
 
 .status-timeline p,
 .all-notes p,
 .case-detail-list p {
-  margin: 10px 0;
+  margin: 10px 0 12px;
   color: #33413b;
   line-height: 1.5;
 }
@@ -656,7 +684,8 @@ td > span {
 }
 
 .all-notes {
-  max-height: 440px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-height: 360px;
   overflow: auto;
   padding-right: 4px;
 }
@@ -682,6 +711,14 @@ td > span {
     grid-template-columns: 1fr;
   }
 
+  .status-pill {
+    margin-top: 0;
+  }
+
+  .patient-snapshot {
+    grid-template-columns: 1fr;
+  }
+
   .monitor-form {
     order: 1;
   }
@@ -698,7 +735,12 @@ td > span {
     grid-template-columns: 1fr;
   }
 
+  .modal-section--all-notes {
+    grid-column: auto;
+  }
+
   .all-notes {
+    grid-template-columns: 1fr;
     max-height: none;
   }
 }
@@ -709,7 +751,7 @@ td > span {
   }
 
   .summary-grid article {
-    min-height: 98px;
+    min-height: 104px;
     padding: 14px;
   }
 
@@ -796,7 +838,7 @@ td > span {
   }
 
   h1 {
-    font-size: 2.25rem;
+    font-size: 2.15rem;
   }
 
   h2 {
@@ -834,11 +876,11 @@ td > span {
 
   .modal-backdrop {
     align-items: stretch;
-    padding: 10px;
+    padding: 8px;
   }
 
   .patient-modal {
-    max-height: calc(100vh - 20px);
+    max-height: calc(100vh - 16px);
   }
 
   .modal-header,
@@ -852,6 +894,17 @@ td > span {
     grid-template-columns: 1fr;
     padding-top: 16px;
     padding-bottom: 16px;
+  }
+
+  .modal-grid {
+    padding-top: 16px;
+    padding-bottom: 16px;
+  }
+
+  .status-timeline article,
+  .all-notes article,
+  .case-detail-list article {
+    padding: 14px;
   }
 }
 
