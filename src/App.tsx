@@ -8,6 +8,7 @@ import {
   Loader2,
   Send,
   ShieldCheck,
+  Stethoscope,
   TrendingUp,
   UserRound,
   X,
@@ -41,6 +42,9 @@ const formatTime = (value: string) =>
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+
+const getCaseNames = (patient?: Patient) =>
+  patient?.cases.length ? patient.cases.map((patientCase) => patientCase.name).join(", ") : "No cases recorded";
 
 function App() {
   const [form, setForm] = useState<PatientNoteFormData>(initialForm);
@@ -105,6 +109,11 @@ function App() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "primary_contacts" },
+        () => void loadPatientBoard(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "patient_cases" },
         () => void loadPatientBoard(),
       )
       .subscribe();
@@ -238,10 +247,20 @@ function App() {
                   <strong>No live patient selected</strong>
                 )}
               </div>
-              <div>
-                <span className="snapshot-label">Primary contact</span>
-                <strong>{selectedPatient?.primaryContact ?? "Unavailable"}</strong>
-                <span>{selectedPatient?.primaryContactEmail ?? "Waiting for data"}</span>
+              <div className="case-snapshot">
+                <span className="snapshot-label">Cases</span>
+                {selectedPatient?.cases.length ? (
+                  <div className="case-chip-list" aria-label={`${selectedPatient.name} cases`}>
+                    {selectedPatient.cases.map((patientCase) => (
+                      <span className="case-chip" key={patientCase.id}>
+                        <Stethoscope size={14} aria-hidden="true" />
+                        {patientCase.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <strong>No cases recorded</strong>
+                )}
               </div>
             </div>
 
@@ -331,6 +350,7 @@ function App() {
                 <tr>
                   <th>Patient</th>
                   <th>Room</th>
+                  <th>Cases</th>
                   <th>Status</th>
                   <th>Latest 3 notes</th>
                 </tr>
@@ -338,7 +358,7 @@ function App() {
               <tbody>
                 {!patients.length && (
                   <tr>
-                    <td colSpan={4}>No patients found in Supabase yet.</td>
+                    <td colSpan={5}>No patients found in Supabase yet.</td>
                   </tr>
                 )}
                 {patients.map((patient) => {
@@ -357,6 +377,19 @@ function App() {
                         <span>{patient.age} years old</span>
                       </td>
                       <td data-label="Room">{patient.room}</td>
+                      <td data-label="Cases">
+                        <div className="case-chip-list case-chip-list--table">
+                          {patient.cases.length ? (
+                            patient.cases.map((patientCase) => (
+                              <span className="case-chip" key={patientCase.id}>
+                                {patientCase.name}
+                              </span>
+                            ))
+                          ) : (
+                            <span>No cases recorded</span>
+                          )}
+                        </div>
+                      </td>
                       <td data-label="Status">
                         <span className={`status-badge status-${patient.status.toLowerCase()}`}>
                           <Icon size={15} aria-hidden="true" />
@@ -421,13 +454,27 @@ function App() {
                   <strong>{activePatient.age} years old</strong>
                 </div>
                 <div>
-                  <span className="snapshot-label">Primary contact</span>
-                  <strong>{activePatient.primaryContact}</strong>
-                  <span>{activePatient.primaryContactEmail}</span>
+                  <span className="snapshot-label">Cases</span>
+                  <strong>{getCaseNames(activePatient)}</strong>
                 </div>
               </div>
 
               <div className="modal-grid">
+                <section>
+                  <h3>Case monitoring</h3>
+                  <div className="case-detail-list">
+                    {activePatient.cases.map((patientCase) => (
+                      <article key={patientCase.id}>
+                        <strong>{patientCase.name}</strong>
+                        <p>{patientCase.monitoringNotes || "No monitoring notes recorded."}</p>
+                      </article>
+                    ))}
+                    {!activePatient.cases.length && (
+                      <p className="empty-state">No cases have been added for this patient.</p>
+                    )}
+                  </div>
+                </section>
+
                 <section>
                   <h3>Latest 3 status updates</h3>
                   <div className="status-timeline">
@@ -437,6 +484,7 @@ function App() {
                           {note.status}
                         </span>
                         <p>{note.content}</p>
+                        {note.summary && <p className="ai-summary">{note.summary}</p>}
                         <small>
                           {note.author} - {formatTime(note.createdAt)}
                         </small>
@@ -460,6 +508,7 @@ function App() {
                           </span>
                         </div>
                         <p>{note.content}</p>
+                        {note.summary && <p className="ai-summary">{note.summary}</p>}
                         <div className="note-meta">
                           <span>{note.author}</span>
                           <span>{note.id}</span>

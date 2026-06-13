@@ -251,6 +251,10 @@ textarea:focus {
   min-width: 0;
 }
 
+.case-snapshot {
+  grid-column: 1 / -1;
+}
+
 .patient-snapshot strong,
 .patient-snapshot span:not(.snapshot-label) {
   display: block;
@@ -266,6 +270,40 @@ textarea:focus {
   font-size: 0.78rem;
   font-weight: 800;
   text-transform: uppercase;
+}
+
+.case-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+
+.case-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 28px;
+  gap: 6px;
+  padding: 5px 9px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 999px;
+  background: rgba(15, 118, 110, 0.08);
+  color: #0f5f59;
+  font-size: 0.76rem;
+  font-weight: 850;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.case-chip svg {
+  flex: 0 0 auto;
+}
+
+.case-chip-list--table .case-chip {
+  border-color: rgba(83, 96, 90, 0.16);
+  background: #eef3ef;
+  color: #33413b;
 }
 
 .primary-button {
@@ -423,7 +461,7 @@ textarea:focus {
 
 table {
   width: 100%;
-  min-width: 820px;
+  min-width: 940px;
   border-collapse: collapse;
 }
 
@@ -536,7 +574,7 @@ td > span {
 
 .modal-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 12px;
   padding: 22px;
 }
@@ -575,13 +613,15 @@ td > span {
 }
 
 .status-timeline,
-.all-notes {
+.all-notes,
+.case-detail-list {
   display: grid;
   gap: 12px;
 }
 
 .status-timeline article,
-.all-notes article {
+.all-notes article,
+.case-detail-list article {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -589,10 +629,24 @@ td > span {
 }
 
 .status-timeline p,
-.all-notes p {
+.all-notes p,
+.case-detail-list p {
   margin: 10px 0;
   color: #33413b;
   line-height: 1.5;
+}
+
+.case-detail-list strong {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.status-timeline .ai-summary,
+.all-notes .ai-summary {
+  padding-left: 10px;
+  border-left: 3px solid rgba(19, 122, 82, 0.32);
+  color: var(--muted);
+  font-size: 0.9rem;
 }
 
 .status-timeline small {

@@ -9,6 +9,15 @@ export type PatientNote = {
   status: PatientStatus;
   createdAt: string;
   author: string;
+  summary?: string;
+  reason?: string;
+};
+
+export type PatientCase = {
+  id: string;
+  patientId: string;
+  name: string;
+  monitoringNotes: string;
 };
 
 export type Patient = {
@@ -19,6 +28,7 @@ export type Patient = {
   primaryContactId: string;
   primaryContact: string;
   primaryContactEmail: string;
+  cases: PatientCase[];
   status: PatientStatus;
   notes: PatientNote[];
 };
@@ -44,6 +54,20 @@ export const seedPatients: Patient[] = [
     primaryContactId: "CON-1001",
     primaryContact: "Marco Reyes",
     primaryContactEmail: "transaction.mclovin@gmail.com",
+    cases: [
+      {
+        id: "CASE-1001-1",
+        patientId: "PAT-1001",
+        name: "Type 2 diabetes",
+        monitoringNotes: "Watch appetite, blood sugar symptoms, hydration, dizziness, and wounds.",
+      },
+      {
+        id: "CASE-1001-2",
+        patientId: "PAT-1001",
+        name: "Hypertension",
+        monitoringNotes: "Track blood pressure, dizziness, headache, fatigue, and medication tolerance.",
+      },
+    ],
     status: "Stable",
     notes: [
       {
@@ -80,6 +104,20 @@ export const seedPatients: Patient[] = [
     primaryContactId: "CON-1002",
     primaryContact: "Lena Hart",
     primaryContactEmail: "transaction.mclovin@gmail.com",
+    cases: [
+      {
+        id: "CASE-1002-1",
+        patientId: "PAT-1002",
+        name: "Pneumonia",
+        monitoringNotes: "Watch cough, fever, breathing effort, oxygen saturation, and chest discomfort.",
+      },
+      {
+        id: "CASE-1002-2",
+        patientId: "PAT-1002",
+        name: "COPD",
+        monitoringNotes: "Track shortness of breath, wheezing, fatigue, and response to breathing exercises.",
+      },
+    ],
     status: "Improving",
     notes: [
       {
@@ -116,6 +154,20 @@ export const seedPatients: Patient[] = [
     primaryContactId: "CON-1003",
     primaryContact: "Yuki Nakamura",
     primaryContactEmail: "transaction.mclovin@gmail.com",
+    cases: [
+      {
+        id: "CASE-1003-1",
+        patientId: "PAT-1003",
+        name: "Dementia",
+        monitoringNotes: "Watch confusion, agitation, sleep changes, appetite, hydration, and safety risks.",
+      },
+      {
+        id: "CASE-1003-2",
+        patientId: "PAT-1003",
+        name: "Dehydration risk",
+        monitoringNotes: "Track fluid intake, dizziness, weakness, urine output, and skipped meals.",
+      },
+    ],
     status: "Watch",
     notes: [
       {
@@ -152,6 +204,20 @@ export const seedPatients: Patient[] = [
     primaryContactId: "CON-1004",
     primaryContact: "Nisha Patel",
     primaryContactEmail: "transaction.mclovin@gmail.com",
+    cases: [
+      {
+        id: "CASE-1004-1",
+        patientId: "PAT-1004",
+        name: "Pneumonia",
+        monitoringNotes: "Watch fever, labored breathing, oxygen saturation, cough, and chest pain.",
+      },
+      {
+        id: "CASE-1004-2",
+        patientId: "PAT-1004",
+        name: "Influenza",
+        monitoringNotes: "Track temperature, chills, weakness, hydration, appetite, and respiratory symptoms.",
+      },
+    ],
     status: "Critical",
     notes: [
       {
@@ -188,6 +254,14 @@ export const seedPatients: Patient[] = [
     primaryContactId: "CON-1005",
     primaryContact: "Tara Mitchell",
     primaryContactEmail: "transaction.mclovin@gmail.com",
+    cases: [
+      {
+        id: "CASE-1005-1",
+        patientId: "PAT-1005",
+        name: "Osteoarthritis",
+        monitoringNotes: "Watch joint pain, mobility, fall risk, medication response, and activity tolerance.",
+      },
+    ],
     status: "Stable",
     notes: [
       {
@@ -245,8 +319,19 @@ type PatientNoteRow = {
   content?: string | null;
   ai_status?: string | null;
   status?: string | null;
+  ai_summary?: string | null;
+  ai_reason?: string | null;
   created_at?: string | null;
   author?: string | null;
+};
+
+type PatientCaseRow = {
+  id: string;
+  patient_id?: string | null;
+  name?: string | null;
+  case_name?: string | null;
+  monitoring_notes?: string | null;
+  notes?: string | null;
 };
 
 const isPatientStatus = (value: unknown): value is PatientStatus =>
@@ -262,9 +347,22 @@ const normalizeNote = (row: PatientNoteRow): PatientNote => ({
   status: normalizeStatus(row.ai_status ?? row.status),
   createdAt: row.created_at ?? new Date().toISOString(),
   author: row.author ?? "Unknown caregiver",
+  summary: row.ai_summary ?? undefined,
+  reason: row.ai_reason ?? undefined,
 });
 
-const normalizePatient = (row: PatientRow, notes: PatientNote[]): Patient => {
+const normalizeCase = (row: PatientCaseRow): PatientCase => ({
+  id: String(row.id),
+  patientId: String(row.patient_id ?? ""),
+  name: row.name ?? row.case_name ?? "Unspecified case",
+  monitoringNotes: row.monitoring_notes ?? row.notes ?? "",
+});
+
+const normalizePatient = (
+  row: PatientRow,
+  notes: PatientNote[],
+  cases: PatientCase[],
+): Patient => {
   const contact = row.primary_contact;
   const joinedContact = Array.isArray(row.primary_contacts)
     ? row.primary_contacts[0]
@@ -282,6 +380,9 @@ const normalizePatient = (row: PatientRow, notes: PatientNote[]): Patient => {
     primaryContact:
       row.primary_contact_name ?? contact?.name ?? joinedContact?.full_name ?? "Primary contact",
     primaryContactEmail: row.primary_contact_email ?? contact?.email ?? joinedContact?.email ?? "",
+    cases: cases
+      .filter((patientCase) => patientCase.patientId === row.id)
+      .sort((a, b) => a.name.localeCompare(b.name)),
     status: normalizeStatus(row.status ?? patientNotes[0]?.status),
     notes: patientNotes,
   };
@@ -292,8 +393,11 @@ export async function fetchPatientBoard(): Promise<Patient[]> {
     throw new Error("Supabase is not configured.");
   }
 
-  const [{ data: patientRows, error: patientError }, { data: noteRows, error: noteError }] =
-    await Promise.all([
+  const [
+    { data: patientRows, error: patientError },
+    { data: noteRows, error: noteError },
+    { data: caseRows, error: caseError },
+  ] = await Promise.all([
       supabase
         .from("patients")
         .select("*, primary_contacts(id, full_name, email)")
@@ -303,6 +407,10 @@ export async function fetchPatientBoard(): Promise<Patient[]> {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(100),
+      supabase
+        .from("patient_cases")
+        .select("*")
+        .order("name", { ascending: true }),
     ]);
 
   if (patientError) {
@@ -313,9 +421,16 @@ export async function fetchPatientBoard(): Promise<Patient[]> {
     throw new Error(noteError.message);
   }
 
-  const notes = ((noteRows ?? []) as PatientNoteRow[]).map(normalizeNote);
+  if (caseError) {
+    throw new Error(caseError.message);
+  }
 
-  return ((patientRows ?? []) as PatientRow[]).map((patient) => normalizePatient(patient, notes));
+  const notes = ((noteRows ?? []) as PatientNoteRow[]).map(normalizeNote);
+  const cases = ((caseRows ?? []) as PatientCaseRow[]).map(normalizeCase);
+
+  return ((patientRows ?? []) as PatientRow[]).map((patient) =>
+    normalizePatient(patient, notes, cases),
+  );
 }
 
 const fallbackStatusFromNote = (note: string): PatientStatus => {
@@ -366,12 +481,17 @@ export async function submitPatientNote(
         age: patient.age,
         room: patient.room,
         currentStatus: patient.status,
+        cases: patient.cases.map((patientCase) => ({
+          id: patientCase.id,
+          name: patientCase.name,
+          monitoringNotes: patientCase.monitoringNotes,
+        })),
         primaryContact: {
           id: patient.primaryContactId,
           name: patient.primaryContact,
           email: patient.primaryContactEmail,
         },
-        latestNotes: patient.notes.slice(0, 3),
+        latestNotes: patient.notes.slice(0, 5),
       },
       note: {
         author: data.author,
@@ -380,7 +500,7 @@ export async function submitPatientNote(
       },
       allowedStatuses: patientStatuses,
       automationInstructions:
-        "Analyze the new note with the patient's recent notes. Pick exactly one status: Stable, Improving, Watch, or Critical. Save the patient, note, and analyzed status to Supabase.",
+        "Analyze the patient's cases, the nurse's newest note, and the previous AI-analyzed notes. Pick exactly one status: Stable, Improving, Watch, or Critical. Save the note, AI summary/reason, and analyzed status to Supabase.",
     }),
   });
 
