@@ -170,7 +170,7 @@ function App() {
       const note = await submitPatientNote(form, selectedPatient);
 
       setForm((current) => ({ ...current, author: "", note: "" }));
-      setNotice(`${selectedPatient.name}'s note was sent to n8n and the live board is refreshing.`);
+      setNotice(`${selectedPatient.name}'s care note was analyzed by AI and saved successfully. The live patient board is updating with the latest status.`);
       await loadPatientBoard();
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Unable to submit patient note.");
